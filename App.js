@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
+import { API_KEY } from '@env';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function App() {
   const [location, setLocation] = useState('loading');
   const [city, setCity] = useState(null);
+  const [days, setDays] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
@@ -23,6 +25,13 @@ export default function App() {
 
       setLocation(location[0]);
       setCity(location[0].city);
+
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${API_KEY}&units=metric`,
+      );
+      const json = await response.json();
+
+      setDays(json.daily);
     }
 
     getCurrentLocation();
@@ -34,14 +43,22 @@ export default function App() {
         <Text style={styles.cityName}>{city}</Text>
       </View>
       <ScrollView pagingEnabled={true} horizontal={true} showsHorizontalScrollIndicator={false}>
-        <View style={styles.day}>
-          <Text style={styles.temperature}>29</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
-        <View style={styles.day}>
-          <Text style={styles.temperature}>29</Text>
-          <Text style={styles.description}>Sunny</Text>
-        </View>
+        {days.length === 0 ? (
+          <View style={styles.day}>
+            <ActivityIndicator
+              color="white"
+              style={{ marginTop: 10 }}
+              size="large"
+            />
+          </View>
+        ) : (
+          days.map((day, index) => (
+            <View key={index} style={styles.day}>
+              <Text style={styles.temp}>{parseFloat(day.temp.day).toFixed(1)}</Text>
+              <Text style={styles.description}>{day.weather[0].main}</Text>
+            </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -65,7 +82,7 @@ const styles = StyleSheet.create({
     width: screenWidth,
     alignItems: 'center',
   },
-  temperature: {
+  temp: {
     marginTop: 50,
     fontSize: 175,
     fontWeight: '400',
@@ -75,4 +92,3 @@ const styles = StyleSheet.create({
     fontSize: 60,
   },
 });
-
