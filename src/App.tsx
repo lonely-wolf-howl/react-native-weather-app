@@ -4,25 +4,24 @@ import * as Location from 'expo-location';
 import { styles } from './styles/AppStyles';
 import { Weather } from './types/weather';
 import { WeatherCard } from './components/WeatherCard';
-import { LocationPermissionResponse } from 'expo-location/src/Location.types';
 
 export default function App() {
   const [city, setCity] = useState<any>('');
   const [days, setDays] = useState<Weather[]>([]);
 
   const getCityFromCurrentLocation = async () => {
-    const permissionResponse: LocationPermissionResponse =
+    const { status }: Location.LocationPermissionResponse =
       await Location.requestForegroundPermissionsAsync();
-    if (permissionResponse.status !== 'granted') {
+    if (status !== 'granted') {
       throw new Error('permission to access location was denied');
     }
 
-    const locationObject: Location.LocationObject =
+    const { coords }: Location.LocationObject =
       await Location.getCurrentPositionAsync({
         accuracy: 5,
       });
     const geocodedAddresses: Location.LocationGeocodedAddress[] =
-      await Location.reverseGeocodeAsync(locationObject.coords);
+      await Location.reverseGeocodeAsync(coords);
 
     return geocodedAddresses[0].city;
   };
